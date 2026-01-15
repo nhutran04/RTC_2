@@ -98,8 +98,7 @@ int main(void)
   MX_RTC_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-  if (HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) != 0x1234)
-  {
+
       sTime.Hours   = 10;
       sTime.Minutes = 30;
       sTime.Seconds = 0;
@@ -110,8 +109,7 @@ int main(void)
       sDate.Year  = 26;   // 2026
       HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 
-      HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x1234);
-  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -120,23 +118,23 @@ int main(void)
   {
     /* USER CODE END WHILE */
 	  HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-	      HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+	  	      HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 
-	      sprintf(uartBuf,
-	              "Time: %02d:%02d:%02d  Date: %02d/%02d/20%02d\r\n",
-	              sTime.Hours,
-	              sTime.Minutes,
-	              sTime.Seconds,
-	              sDate.Date,
-	              sDate.Month,
-	              sDate.Year);
+	  	      sprintf(uartBuf,
+	  	              "Time: %02d:%02d:%02d  Date: %02d/%02d/20%02d\r\n",
+	  	              sTime.Hours,
+	  	              sTime.Minutes,
+	  	              sTime.Seconds,
+	  	              sDate.Date,
+	  	              sDate.Month,
+	  	              sDate.Year);
 
-	      HAL_UART_Transmit(&huart3,
-	                        (uint8_t*)uartBuf,
-	                        strlen(uartBuf),
-	                        HAL_MAX_DELAY);
+	  	      HAL_UART_Transmit(&huart3,
+	  	                        (uint8_t*)uartBuf,
+	  	                        strlen(uartBuf),
+	  	                        HAL_MAX_DELAY);
 
-	      HAL_Delay(1000);
+	  	      HAL_Delay(1000);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -159,10 +157,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSE;
-  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;
@@ -201,8 +199,8 @@ static void MX_RTC_Init(void)
 
   /* USER CODE END RTC_Init 0 */
 
- // RTC_TimeTypeDef sTime = {0};
- // RTC_DateTypeDef sDate = {0};
+//  RTC_TimeTypeDef sTime = {0};
+//  RTC_DateTypeDef sDate = {0};
 
   /* USER CODE BEGIN RTC_Init 1 */
 
@@ -228,20 +226,25 @@ static void MX_RTC_Init(void)
 
   /** Initialize RTC and set the Time and Date
   */
-  //sTime.Hours = 0x0;
-  //sTime.Minutes = 0x0;
-  //sTime.Seconds = 0x0;
-
-  //sDate.WeekDay = RTC_WEEKDAY_MONDAY;
-  //sDate.Month = RTC_MONTH_JANUARY;
-  //sDate.Date = 0x1;
- // sDate.Year = 0x0;
+//  sTime.Hours = 0x0;
+//  sTime.Minutes = 0x0;
+//  sTime.Seconds = 0x0;
+//  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+//  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+//  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+//  {
+//    Error_Handler();
+//  }
+//  sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+//  sDate.Month = RTC_MONTH_JANUARY;
+//  sDate.Date = 0x1;
+//  sDate.Year = 0x0;
 
 //  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
 //  {
 //    Error_Handler();
 //  }
-  /* USER CODE BEGIN RTC_Init 2 */
+//  /* USER CODE BEGIN RTC_Init 2 */
 
   /* USER CODE END RTC_Init 2 */
 
