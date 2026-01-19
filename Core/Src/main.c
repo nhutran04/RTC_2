@@ -56,6 +56,8 @@ uint8_t rxBuffer;
 /* Private variables ---------------------------------------------------------*/
 RTC_HandleTypeDef hrtc;
 
+TIM_HandleTypeDef htim3;
+
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
@@ -67,8 +69,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_RTC_Init(void);
 static void MX_USART3_UART_Init(void);
-void setting(void);
-void settime(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -77,34 +78,7 @@ void settime(void);
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
-void setting(void)
-{
-	HAL_UART_Transmit(&huart3,(uint8_t *)"Enter phut 1 :",strlen("Enter phut 1 :"),HAL_MAX_DELAY);
-	HAL_UART_Receive(&huart3,&minute_1,1,HAL_MAX_DELAY);
-	HAL_UART_Transmit(&huart3,(uint8_t *)"Enter phut 2 :",strlen("Enter phut 2 :"),HAL_MAX_DELAY);
-	HAL_UART_Receive(&huart3,&minute_2,1,HAL_MAX_DELAY);
-	minute = (minute_2-'0') * 10 + (minute_1 - '0');
 
-	HAL_UART_Transmit(&huart3,(uint8_t *)"Enter hours 1 :",strlen("Enter hours 1 :"),HAL_MAX_DELAY);
-	HAL_UART_Receive(&huart3,&hour_1,1,HAL_MAX_DELAY);
-	HAL_UART_Transmit(&huart3,(uint8_t *)"Enter hours 2 :",strlen("Enter hours 1 :"),HAL_MAX_DELAY);
-	HAL_UART_Receive(&huart3,&hour_2,1,HAL_MAX_DELAY);
-	hour =(hour_2 - '0') * 10 + ( hour_1 - '0');
-
-	settime();
-}
-void settime(void)
-{
-	sTime.Hours   = hour;
-	sTime.Minutes = minute;
-	sTime.Seconds = 0;
-	HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-
-	sDate.Date  = 15;
-	sDate.Month = RTC_MONTH_JANUARY;
-	sDate.Year  = 26;   // 2026
-	HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-}
 /**
   * @brief  The application entry point.
   * @retval int
@@ -136,6 +110,7 @@ int main(void)
   MX_GPIO_Init();
   MX_RTC_Init();
   MX_USART3_UART_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
   settime();
@@ -146,36 +121,12 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  HAL_UART_Receive_IT(&huart3, &rxBuffer,1 );
 
-	  HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-	  	      HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-
-	  	      sprintf(uartBuf,
-	  	              "Time: %02d:%02d  Date: %02d/%02d/20%02d\r\n",
-	  	              sTime.Hours,
-	  	              sTime.Minutes,
-	  	              sDate.Date,
-	  	              sDate.Month,
-	  	              sDate.Year);
-
-	  	      HAL_UART_Transmit(&huart3,
-	  	                        (uint8_t*)uartBuf,
-	  	                        strlen(uartBuf),
-	  	                        HAL_MAX_DELAY);
-
-	  	      HAL_Delay(1000);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
-HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	if(huart->Instance == USART3)
-	{
-		setting();
-	}
-}
+
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -193,13 +144,12 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 4;
   RCC_OscInitStruct.PLL.PLLN = 84;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
@@ -235,8 +185,8 @@ static void MX_RTC_Init(void)
 
   /* USER CODE END RTC_Init 0 */
 
-//  RTC_TimeTypeDef sTime = {0};
-//  RTC_DateTypeDef sDate = {0};
+  RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef sDate = {0};
 
   /* USER CODE BEGIN RTC_Init 1 */
 
@@ -262,27 +212,72 @@ static void MX_RTC_Init(void)
 
   /** Initialize RTC and set the Time and Date
   */
-//  sTime.Hours = 0x0;
-//  sTime.Minutes = 0x0;
-//  sTime.Seconds = 0x0;
-//  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-//  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-//  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
-//  {
-//    Error_Handler();
-//  }
-//  sDate.WeekDay = RTC_WEEKDAY_MONDAY;
-//  sDate.Month = RTC_MONTH_JANUARY;
-//  sDate.Date = 0x1;
-//  sDate.Year = 0x0;
+  sTime.Hours = 0x0;
+  sTime.Minutes = 0x0;
+  sTime.Seconds = 0x0;
+  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sDate.WeekDay = RTC_WEEKDAY_MONDAY;
+  sDate.Month = RTC_MONTH_JANUARY;
+  sDate.Date = 0x1;
+  sDate.Year = 0x0;
 
-//  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
-//  {
-//    Error_Handler();
-//  }
-//  /* USER CODE BEGIN RTC_Init 2 */
+  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
 
   /* USER CODE END RTC_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 42000;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 3999;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
 
 }
 
