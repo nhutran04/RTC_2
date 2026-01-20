@@ -398,7 +398,7 @@ __weak void HAL_Delay(uint32_t Delay)
     wait += (uint32_t)(uwTickFreq);
   }
 
-  while((HAL_GetTick() - tickstart) < wait)
+  	  while((HAL_GetTick() - tickstart) < wait)
   {
   }
 }
@@ -408,7 +408,7 @@ __weak void HAL_Delay(uint32_t Delay)
   * @note In the default implementation , SysTick timer is the source of time base. It is
   *       used to generate interrupts at regular time intervals. Once HAL_SuspendTick()
   *       is called, the SysTick interrupt will be disabled and so Tick increment 
-  *       is suspended.
+  *       is suspended.                               
   * @note This function is declared as __weak to be overwritten in case of other
   *       implementations in user file.
   * @retval None

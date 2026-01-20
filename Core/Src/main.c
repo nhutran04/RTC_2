@@ -23,9 +23,19 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
+#include "math.h"
 RTC_TimeTypeDef sTime = {0};
 RTC_DateTypeDef sDate = {0};
+uint8_t minute_1 = 0;
+uint8_t minute_2 = 0;
+uint8_t minute = 0;
+uint8_t hour_1 = 0;
+uint8_t hour_2 = 0;
+uint8_t hour = 0;
+int m1 = 0;
 char uartBuf[50];
+//uint16_t rxIndex = 0;
+uint8_t rxBuffer;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,13 +67,42 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_RTC_Init(void);
 static void MX_USART3_UART_Init(void);
+void setting(void);
+void settime(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void setting(void)
+{
+	HAL_UART_Transmit(&huart3,(uint8_t *)"Enter phut 1 :",strlen("Enter phut 1 :"),HAL_MAX_DELAY);
+	HAL_UART_Receive(&huart3,&minute_1,1,HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart3,(uint8_t *)"Enter phut 2 :",strlen("Enter phut 2 :"),HAL_MAX_DELAY);
+	HAL_UART_Receive(&huart3,&minute_2,1,HAL_MAX_DELAY);
+	minute = (minute_2-'0') * 10 + (minute_1 - '0');
 
+	HAL_UART_Transmit(&huart3,(uint8_t *)"Enter hours 1 :",strlen("Enter hours 1 :"),HAL_MAX_DELAY);
+	HAL_UART_Receive(&huart3,&hour_1,1,HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart3,(uint8_t *)"Enter hours 2 :",strlen("Enter hours 1 :"),HAL_MAX_DELAY);
+	HAL_UART_Receive(&huart3,&hour_2,1,HAL_MAX_DELAY);
+	hour =(hour_2 - '0') * 10 + ( hour_1 - '0');
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+	settime();
+}
+void settime(void)
+{
+	sTime.Hours   = hour;
+	sTime.Minutes = minute;
+	sTime.Seconds = 0;
+	HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+
+	sDate.Date  = 15;
+	sDate.Month = RTC_MONTH_JANUARY;
+	sDate.Year  = 26;   // 2026
+	HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+}
 /* USER CODE END 0 */
 
 /**
@@ -99,17 +138,7 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
-      sTime.Hours   = 10;
-      sTime.Minutes = 30;
-      sTime.Seconds = 0;
-      HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-
-      sDate.Date  = 15;
-      sDate.Month = RTC_MONTH_JANUARY;
-      sDate.Year  = 26;   // 2026
-      HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-
-
+  settime();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -117,29 +146,33 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  HAL_UART_Receive_IT(&huart3, &rxBuffer,1 );
+
 	  HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-	  	      HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+	  HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 
 	  	      sprintf(uartBuf,
-	  	              "Time: %02d:%02d:%02d  Date: %02d/%02d/20%02d\r\n",
+	  	              "Time: %02d:%02d  Date: %02d/%02d/20%02d\r\n",
 	  	              sTime.Hours,
 	  	              sTime.Minutes,
-	  	              sTime.Seconds,
 	  	              sDate.Date,
 	  	              sDate.Month,
 	  	              sDate.Year);
 
-	  	      HAL_UART_Transmit(&huart3,
-	  	                        (uint8_t*)uartBuf,
-	  	                        strlen(uartBuf),
-	  	                        HAL_MAX_DELAY);
+	  	      HAL_UART_Transmit(&huart3,(uint8_t*)uartBuf,strlen(uartBuf),HAL_MAX_DELAY);
 
 	  	      HAL_Delay(1000);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
-
+HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == USART3)
+	{
+		setting();
+	}
+}
 /**
   * @brief System Clock Configuration
   * @retval None
